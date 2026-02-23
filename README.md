@@ -1,4 +1,4 @@
-# DEV-OS v1.0.5 — CLI-Aesthetic Developer Portfolio
+# DEV-OS v1.0.5 — CLI Developer Portfolio
 
 A terminal-inspired, single-page developer portfolio built with Next.js 15. Features dark/light theming, scroll animations, and an AI-powered chat that answers questions about the developer.
 
