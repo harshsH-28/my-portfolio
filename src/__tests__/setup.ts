@@ -68,6 +68,39 @@ vi.mock("framer-motion", () => {
   };
 });
 
+// Mock @ai-sdk/react — return pre-seeded messages so AskMeAnything renders correctly
+vi.mock("@ai-sdk/react", async () => {
+  const portfolioData = await import("@/lib/portfolio-data");
+  return {
+    useChat: vi.fn().mockReturnValue({
+      messages: [
+        {
+          id: "msg-1",
+          role: "assistant",
+          parts: [{ type: "text", text: portfolioData.AI_CHAT_INTRO.aiGreeting }],
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          parts: [{ type: "text", text: portfolioData.AI_CHAT_INTRO.aiSpecialty }],
+        },
+        {
+          id: "msg-3",
+          role: "user",
+          parts: [{ type: "text", text: portfolioData.AI_CHAT_INTRO.guestQuestion }],
+        },
+      ],
+      sendMessage: vi.fn(),
+      status: "ready",
+    }),
+  };
+});
+
+// Mock ai — stub DefaultChatTransport so it doesn't attempt network calls
+vi.mock("ai", () => ({
+  DefaultChatTransport: vi.fn().mockImplementation(() => ({})),
+}));
+
 // Suppress expected React test warnings
 const originalError = console.error;
 beforeAll(() => {

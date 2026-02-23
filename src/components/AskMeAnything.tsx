@@ -4,70 +4,60 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AI_CHAT_INTRO } from "@/lib/portfolio-data";
+import { useChat, type UIMessage } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 
-type Message = {
-  id: string;
-  role: "ai" | "guest";
-  content: string;
-};
-
-const INITIAL_MESSAGES: Message[] = [
+const INITIAL_MESSAGES: UIMessage[] = [
   {
     id: "msg-1",
-    role: "ai",
-    content: AI_CHAT_INTRO.aiGreeting,
+    role: "assistant",
+    parts: [{ type: "text", text: AI_CHAT_INTRO.aiGreeting }],
   },
   {
     id: "msg-2",
-    role: "ai",
-    content: AI_CHAT_INTRO.aiSpecialty,
+    role: "assistant",
+    parts: [{ type: "text", text: AI_CHAT_INTRO.aiSpecialty }],
   },
   {
     id: "msg-3",
-    role: "guest",
-    content: AI_CHAT_INTRO.guestQuestion,
+    role: "user",
+    parts: [{ type: "text", text: AI_CHAT_INTRO.guestQuestion }],
   },
 ];
 
+function getMessageText(msg: UIMessage): string {
+  return msg.parts
+    .filter((p): p is { type: "text"; text: string } => p.type === "text")
+    .map((p) => p.text)
+    .join("");
+}
+
 /**
  * AskMeAnything — CLI-styled terminal chat UI.
- * Shows a simulated conversation with the developer's AI twin.
+ * Streams real answers from Gemini 2.0 Flash via /api/chat.
  */
 export function AskMeAnything() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
-  const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(true);
+  const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({ api: "/api/chat" }),
+    messages: INITIAL_MESSAGES,
+  });
+
+  // Show indicator while waiting for the first token
+  const isTyping = status === "submitted";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
-
-    const guestMsg: Message = {
-      id: `msg-${Date.now()}`,
-      role: "guest",
-      content: inputValue.trim(),
-    };
-
-    setMessages((prev) => [...prev, guestMsg]);
-    setInputValue("");
-    setIsTyping(true);
-
-    // Simulate AI response delay
-    setTimeout(() => {
-      const aiReply: Message = {
-        id: `msg-${Date.now()}-ai`,
-        role: "ai",
-        content:
-          "Processing your query through my knowledge base... This is a portfolio demo — connect with me via the contact form below to start a real conversation.",
-      };
-      setMessages((prev) => [...prev, aiReply]);
-      setIsTyping(false);
-    }, 1800);
+    if (!input.trim() || status === "submitted" || status === "streaming")
+      return;
+    sendMessage({ text: input.trim() });
+    setInput("");
   };
 
   return (
@@ -127,31 +117,34 @@ export function AskMeAnything() {
               <span
                 className={cn(
                   "font-bold shrink-0",
-                  msg.role === "ai"
+                  msg.role === "assistant"
                     ? "text-primary"
                     : "text-neutral-900 dark:text-white"
                 )}
               >
-                {msg.role === "ai" ? "[AI]:" : "[GUEST@ROOT]:"}
+                {msg.role === "assistant" ? "[AI]:" : "[GUEST@ROOT]:"}
               </span>
               <p
                 className={cn(
                   "leading-relaxed",
-                  msg.role === "ai"
+                  msg.role === "assistant"
                     ? "text-neutral-700 dark:text-neutral-300"
                     : "text-primary"
                 )}
               >
-                {msg.content}
+                {getMessageText(msg)}
               </p>
             </div>
           ))}
 
-          {/* Typing indicator */}
+          {/* Typing indicator — shown while waiting for first token */}
           {isTyping && (
             <div className="flex gap-4">
               <span className="text-primary font-bold shrink-0">[AI]:</span>
-              <span className="cli-cursor animate-blink" aria-label="AI is typing" />
+              <span
+                className="cli-cursor animate-blink"
+                aria-label="AI is typing"
+              />
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -170,9 +163,10 @@ export function AskMeAnything() {
             <span className="text-primary font-bold shrink-0">&gt;&gt;&gt;</span>
             <input
               type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about my tech stack..."
+              disabled={status === "submitted" || status === "streaming"}
               className={cn(
                 "flex-1 bg-transparent border-none outline-none focus:ring-0",
                 "text-primary placeholder-neutral-600 text-sm"

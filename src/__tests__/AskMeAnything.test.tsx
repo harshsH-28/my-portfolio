@@ -43,10 +43,11 @@ describe("AskMeAnything", () => {
     expect(input.value).toBe("What is your stack?");
   });
 
-  it("renders the blinking cursor element", () => {
+  it("does not show typing indicator when not loading", () => {
     const { container } = render(<AskMeAnything />);
+    // The cursor only appears while status === "submitted" (waiting for AI response)
     const cursor = container.querySelector(".animate-blink");
-    expect(cursor).toBeInTheDocument();
+    expect(cursor).not.toBeInTheDocument();
   });
 
   it("renders the shell session label", () => {
