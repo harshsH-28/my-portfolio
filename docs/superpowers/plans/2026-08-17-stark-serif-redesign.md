@@ -18,7 +18,8 @@
 - Motion: 8px fade-up entries (~0.45s, once), ~60ms stagger, `MotionConfig reducedMotion="user"`. Nothing decorative.
 - Body text always left-aligned; never `text-justify`.
 - Every task ends with `~/.bun/bin/bun run test:run` and (where stated) `~/.bun/bin/bun run build` green before commit.
-- The chat backend (`src/app/api/chat/route.ts`, `src/lib/personal-context.ts`) is **never modified**.
+- Before each commit, run `~/.bun/bin/bunx biome check --write <files you created/modified>` so import order and formatting match Biome — never run it repo-wide (it would touch unrelated files).
+- The chat backend (`src/app/api/chat/route.ts`, `src/lib/personal-context.ts`) is **never modified** — sole exception: the one-time formatting-only Biome fix in Task 11 Step 2 (import order/whitespace, zero semantic change).
 - Placeholder user data (`href: "#"`, `you@example.com`) is intentional — the user personalizes `portfolio-data.ts` later.
 
 ---
@@ -66,7 +67,11 @@ Expected: compiles with no missing-import errors.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add -A && git commit -m "refactor: remove terminal-era UI components ahead of redesign"
+# git rm already staged the deletions — add ONLY the stubbed page.
+# Do NOT use `git add -A`: the working tree has an unrelated uncommitted
+# tsconfig.json change that must stay out of this plan's commits.
+git add src/app/page.tsx
+git commit -m "refactor: remove terminal-era UI components ahead of redesign"
 ```
 
 ---
@@ -127,10 +132,18 @@ Rewrite `globals.css` with the monochrome token system and swap fonts in `layout
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   --animate-blink: blink 1.1s step-end infinite;
+  --animate-dialog-in: dialog-in 0.2s ease-out;
 }
 
 @keyframes blink {
   50% { opacity: 0; }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────── */
@@ -181,7 +194,10 @@ const jetbrainsMono = JetBrains_Mono({
 
 /* ─── Metadata ───────────────────────────────────────────────────────── */
 export const metadata: Metadata = {
-  title: SITE_CONFIG.title,
+  title: {
+    default: SITE_CONFIG.title,
+    template: "%s — Harsh",
+  },
   description: SITE_CONFIG.description,
   openGraph: {
     title: SITE_CONFIG.title,
@@ -357,7 +373,7 @@ export const NAV_LINKS = [
 export const SOCIAL_LINKS = [
   { label: "github", href: "#" },
   { label: "linkedin", href: "#" },
-  { label: "twitter", href: "#" },
+  { label: "x", href: "#" },
   { label: "email", href: "mailto:you@example.com" },
 ] as const;
 
@@ -781,6 +797,20 @@ export function AskDialog({
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
+  // Native <dialog> doesn't close on backdrop click — the backdrop IS the
+  // dialog element, so a click whose target is the dialog itself is outside
+  // the panel. (Effect, not JSX onClick: keeps Biome's a11y rule quiet;
+  // keyboard users already have Esc natively.)
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const onBackdropClick = (e: MouseEvent) => {
+      if (e.target === dialog) dialog.close();
+    };
+    dialog.addEventListener("click", onBackdropClick);
+    return () => dialog.removeEventListener("click", onBackdropClick);
+  }, []);
+
   const ask = (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
@@ -792,11 +822,7 @@ export function AskDialog({
     <dialog
       ref={dialogRef}
       onClose={onClose}
-      onClick={(e) => {
-        // Native <dialog> doesn't close on backdrop click — the backdrop IS the dialog element
-        if (e.target === dialogRef.current) dialogRef.current?.close();
-      }}
-      className="m-auto w-[min(640px,calc(100vw-32px))] rounded-xl border border-hairline bg-surface p-6 text-ink-muted backdrop:bg-paper/70 backdrop:backdrop-blur-sm"
+      className="m-auto w-[min(640px,calc(100vw-32px))] rounded-xl border border-hairline bg-surface p-6 text-ink-muted backdrop:bg-paper/70 backdrop:backdrop-blur-sm motion-safe:open:animate-dialog-in"
     >
       <form
         onSubmit={(e) => {
@@ -940,11 +966,13 @@ describe("Nav", () => {
 
   it("opens the ask dialog from the ask button", async () => {
     usePathnameMock.mockReturnValue("/");
-    render(<Nav />);
+    const { container } = render(<Nav />);
+    const dialog = container.querySelector("dialog") as HTMLDialogElement;
+    expect(dialog).not.toHaveAttribute("open");
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "ask" }));
     });
-    expect(screen.getByPlaceholderText("ask me anything…")).toBeInTheDocument();
+    expect(dialog).toHaveAttribute("open");
   });
 });
 ```
@@ -1234,8 +1262,8 @@ export default function HomePage() {
             <li key={social.label}>
               <a
                 href={social.href}
-                target="_blank"
-                rel="noreferrer"
+                target={social.href.startsWith("http") ? "_blank" : undefined}
+                rel={social.href.startsWith("http") ? "noreferrer" : undefined}
                 className="text-ink underline decoration-ink-faint underline-offset-4 transition-colors hover:decoration-ink"
               >
                 {social.label} ↗
@@ -1765,8 +1793,20 @@ Replace the `<ThemeProvider …>` block inside `<body>` with:
 
 - [ ] **Step 2: Full verification**
 
+First, clear the pre-existing Biome debt that blocks the repo-wide lint gate — a one-time, formatting-only fix (import order/whitespace; verify the diff contains zero semantic changes):
+
+```bash
+~/.bun/bin/bunx biome check --write vitest.config.ts src/app/api/chat/route.ts src/lib/utils.ts
+# tsconfig.json also has a pre-existing format error, but it carries an
+# unrelated uncommitted user change — format it so lint passes, but do NOT
+# stage or commit it:
+~/.bun/bin/bunx biome check --write tsconfig.json
+```
+
+Then run the full gate:
+
 Run: `~/.bun/bin/bun run test:run && ~/.bun/bin/bun run build && ~/.bun/bin/bun run lint`
-Expected: all PASS. Fix any Biome findings in files this plan created (do not reformat untouched files).
+Expected: all PASS. Fix any remaining Biome findings in files this plan created (do not reformat other untouched files).
 
 - [ ] **Step 3: Orphan sweep**
 
@@ -1802,7 +1842,8 @@ Also delete the `### Icons` section (Material Symbols is gone) and any remaining
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/app/layout.tsx CLAUDE.md README.md
+# tsconfig.json stays unstaged (carries an unrelated user change)
+git add src/app/layout.tsx CLAUDE.md README.md vitest.config.ts src/app/api/chat/route.ts src/lib/utils.ts
 git commit -m "feat: assemble Stark & Serif layout with nav and motion config"
 ```
 
