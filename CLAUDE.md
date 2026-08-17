@@ -16,7 +16,7 @@ bun run format     # biome format --write (formatter)
 
 Run a single test file:
 ```bash
-bun run vitest run src/__tests__/HeroSection.test.tsx
+bun run vitest run src/__tests__/Nav.test.tsx
 ```
 
 > **Note:** `bun` is at `~/.bun/bin/bun` — add it to PATH or use the full path if the shell can't find it.
@@ -40,7 +40,7 @@ without touching components.
 - Fonts: Source Serif 4 (headlines), Inter (body), JetBrains Mono (labels) via `next/font`.
 
 ### Framer Motion usage
-Components that animate on scroll use `motion.*` elements with `whileInView`. `HeroSection` uses named `Variants` objects (typed as `Variants` from framer-motion — required for v12 type compatibility). Other sections use inline `initial/whileInView/transition` props.
+Motion is whisper-level: the `Reveal` wrapper and ad-hoc `motion.*` elements use `whileInView` for an 8px fade-up, and `layout.tsx` sets `MotionConfig reducedMotion="user"` globally.
 
 ### Testing setup (`src/__tests__/`)
 - **Vitest v3** + **jsdom** + **@testing-library/react**.

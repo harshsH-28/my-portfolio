@@ -2,6 +2,7 @@
 
 import { formatDropDate, getDrops } from "@/lib/drops";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { useState } from "react";
 
 const VISIBLE_COUNT = 4;
@@ -31,12 +32,21 @@ export function DropsFeed() {
               {formatDropDate(drop.date)}
             </span>
             {drop.href ? (
-              <a
-                href={drop.href}
-                className="w-fit font-serif text-xl font-semibold text-ink transition-colors hover:underline hover:underline-offset-4"
-              >
-                {drop.title}
-              </a>
+              drop.href.startsWith("http") ? (
+                <a
+                  href={drop.href}
+                  className="w-fit font-serif text-xl font-semibold text-ink transition-colors hover:underline hover:underline-offset-4"
+                >
+                  {drop.title} ↗
+                </a>
+              ) : (
+                <Link
+                  href={drop.href}
+                  className="w-fit font-serif text-xl font-semibold text-ink transition-colors hover:underline hover:underline-offset-4"
+                >
+                  {drop.title}
+                </Link>
+              )
             ) : (
               <span className="font-serif text-xl font-semibold text-ink">{drop.title}</span>
             )}

@@ -31,6 +31,7 @@ export function AskDialog({
   });
 
   const busy = status === "submitted" || status === "streaming";
+  const errored = status === "error";
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -40,14 +41,23 @@ export function AskDialog({
   }, [open]);
 
   // Native <dialog> doesn't close on backdrop click — the backdrop IS the
-  // dialog element, so a click whose target is the dialog itself is outside
-  // the panel. (Effect, not JSX onClick: keeps Biome's a11y rule quiet;
-  // keyboard users already have Esc natively.)
+  // dialog element, so any click lands with e.target === dialog regardless
+  // of whether it's inside the padded panel. Hit-test the click point
+  // against the dialog's rect: only close when it's actually outside.
+  // (Effect, not JSX onClick: keeps Biome's a11y rule quiet; keyboard
+  // users already have Esc natively.)
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     const onBackdropClick = (e: MouseEvent) => {
-      if (e.target === dialog) dialog.close();
+      if (e.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      const inside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+      if (!inside) dialog.close();
     };
     dialog.addEventListener("click", onBackdropClick);
     return () => dialog.removeEventListener("click", onBackdropClick);
@@ -64,6 +74,7 @@ export function AskDialog({
     <dialog
       ref={dialogRef}
       onClose={onClose}
+      aria-label="Ask me anything"
       className="m-auto w-[min(640px,calc(100vw-32px))] rounded-xl border border-hairline bg-surface p-6 text-ink-muted backdrop:bg-paper/70 backdrop:backdrop-blur-sm motion-safe:open:animate-dialog-in"
     >
       <form
@@ -117,6 +128,9 @@ export function AskDialog({
             <span aria-hidden className="animate-blink text-ink">
               ▍
             </span>
+          )}
+          {errored && (
+            <p className="font-mono text-xs text-ink-faint">couldn&apos;t answer — try again</p>
           )}
         </div>
       )}
