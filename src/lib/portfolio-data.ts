@@ -8,13 +8,13 @@ import type { Drop } from "@/lib/drops";
 export const SITE_CONFIG = {
   title: "Harsh Sharma — software engineer",
   description:
-    "Software engineer building backend systems, media pipelines, and AI workflows that serve 100K+ clients.",
+    "Software engineer building backend systems, media pipelines, and AI workflows that serve 100K+ end users.",
 } as const;
 
 export const GREETING = "Hi, I'm Harsh.";
 
 export const BIO =
-  "I'm a software engineer at Tarsense, building backend systems, media pipelines, and AI workflows used by 100K+ clients. I care about clarity and craft — fast APIs, clean architecture, and tools that quietly do their job.";
+  "I'm a software engineer at Tarsense, building backend systems, media pipelines, and AI workflows used by 100K+ end users. I care about clarity and craft — fast APIs, clean architecture, and tools that quietly do their job.";
 
 export const CONTACT_EMAIL = "harshsharma6419@gmail.com";
 
@@ -39,7 +39,7 @@ export const EXPERIENCES = [
     title: "Software Development Engineer",
     company: "Tarsense Technologies · Remote",
     description:
-      "Cut media API response times 75% (12s → 3s) for 100K+ clients by eliminating redundant S3 network I/O. Designed the platform's five-channel messaging architecture (web, WhatsApp, SMS, email, voice) behind a single ports-and-adapters interface — swapping a provider needs one isolated adapter, zero core changes. Built an intent-management UI for AI workflow builders that cut feature setup time by 80%.",
+      "Cut media API response times 75% (12s → 3s) for 100K+ end users by eliminating redundant S3 network I/O. Designed the platform's five-channel messaging architecture (web, WhatsApp, SMS, email, voice) behind a single ports-and-adapters interface — swapping a provider needs one isolated adapter, zero core changes. Built an intent-management UI for AI workflow builders that cut feature setup time by 80%.",
     tags: ["Node.js", "MongoDB", "AWS S3", "System Design"],
   },
   {
