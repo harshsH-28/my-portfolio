@@ -187,6 +187,6 @@ Publishing drops without touching code. Designed here so the redesign accommodat
 
 - **`/studio`** — hidden route, not linked anywhere. Gate: a single passcode compared against an env secret (`STUDIO_SECRET`), stored in an httpOnly cookie after entry. One owner, no user accounts.
 - **UI** — same design system: one quiet form (kind, date, title, one-liner, optional link), a publish action, and a list of existing drops with delete. Nothing else.
-- **Storage** — a free hosted Postgres (Supabase or Neon), single `drops` table mirroring the `Drop` type.
-- **API** — `GET /api/drops` (public, cached/revalidated) and `POST`/`DELETE /api/drops` (passcode-gated). `getDrops()` switches from the data file to this source; the Home feed component doesn't change.
+- **Storage** — a **SQLite file (Drizzle)** on a Docker volume; the site is self-hosted on the user's VPS behind Caddy (decided 2026-08-17 — no hosted DB: Supabase free pauses after inactivity, and serverless-only stores aren't needed on a persistent server). Single `drops` table mirroring the `Drop` type.
+- **API** — `GET /api/drops` (public, cached/revalidated) and `POST`/`DELETE /api/drops` (passcode-gated). `getDrops()` switches from the data file to this source and becomes a server-side read — the Home page fetches drops and passes them to `DropsFeed` as props (it currently calls `getDrops()` synchronously from the client component).
 - **Out of scope for phase 2:** editing, images, drafts, markdown rendering — add only when actually needed.
