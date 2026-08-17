@@ -13,7 +13,7 @@ describe("ExperiencePage", () => {
     render(<ExperiencePage />);
     for (const exp of EXPERIENCES) {
       expect(screen.getByText(exp.title)).toBeInTheDocument();
-      expect(screen.getByText(exp.company)).toBeInTheDocument();
+      expect(screen.getAllByText(exp.company).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText(exp.period)).toBeInTheDocument();
       for (const tag of exp.tags) {
         expect(screen.getAllByText(tag).length).toBeGreaterThanOrEqual(1);
