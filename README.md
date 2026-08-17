@@ -1,10 +1,10 @@
-# DEV-OS v1.0.5 — CLI Developer Portfolio
+# Stark & Serif — Developer Portfolio
 
-A terminal-inspired, single-page developer portfolio built with Next.js 15. Features dark/light theming, scroll animations, and an AI-powered chat that answers questions about the developer.
+A monochrome, multi-page developer portfolio built with Next.js 15. Features dark/light theming, scroll animations, and an AI-powered chat that answers questions about the developer.
 
 ## Features
 
-- **CLI / terminal aesthetic** — brutalist typography, CRT overlay effect, monospace fonts
+- **Stark & Serif aesthetic** — monochrome tokens, serif headlines, plain-text nav
 - **Dark + light mode** — toggle via `next-themes`, defaults to dark
 - **AI chat** — "Ask Me Anything" section powered by Google Gemini 2.0 Flash via Vercel AI SDK
 - **Scroll animations** — Framer Motion `whileInView` transitions throughout

@@ -1,6 +1,6 @@
-import { google } from "@ai-sdk/google";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { PERSONAL_CONTEXT } from "@/lib/personal-context";
+import { google } from "@ai-sdk/google";
+import { type UIMessage, convertToModelMessages, streamText } from "ai";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { cn } from "@/lib/utils";
+import { describe, expect, it } from "vitest";
 
 describe("cn utility", () => {
   it("merges class names correctly", () => {
@@ -19,8 +19,6 @@ describe("cn utility", () => {
   });
 
   it("handles object syntax", () => {
-    expect(cn({ "text-primary": true, "text-white": false })).toBe(
-      "text-primary"
-    );
+    expect(cn({ "text-primary": true, "text-white": false })).toBe("text-primary");
   });
 });

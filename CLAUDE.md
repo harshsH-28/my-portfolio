@@ -23,16 +23,21 @@ bun run vitest run src/__tests__/HeroSection.test.tsx
 
 ## Architecture
 
-Single-page portfolio rendered as a static Next.js 15 App Router site. The entire page lives in `src/app/page.tsx`, which composes all sections in order. There is no routing beyond the root.
+Multi-page static-ish Next.js App Router site with the "Stark & Serif" monochrome design.
+Routes: `/` (greeting, bio, social links, Drops feed), `/experience`, `/projects`, `/achievements`.
+`src/components/Nav.tsx` renders the shared plain-text nav and owns the AskDialog (AI chat) state.
 
 ### Data layer
-All content (bio, experience, projects, achievements, nav links, social links, AI chat intro) lives in **`src/lib/portfolio-data.ts`** as typed `as const` exports. To personalize the portfolio, edit only this file — no component changes needed.
+All content lives in `src/lib/portfolio-data.ts`. The Drops feed reads through
+`getDrops()` in `src/lib/drops.ts` — phase 2 will swap that accessor to a database
+without touching components.
 
 ### Theme system
-- `next-themes` with `attribute="class"` and `defaultTheme="dark"` — adds `.dark` to `<html>`.
-- Tailwind CSS v4 with `@custom-variant dark (&:where(.dark, .dark *))` in `globals.css`.
-- All custom color tokens (`primary`, `terminal`, `cream`, etc.) and font/animation tokens are defined in the `@theme {}` block in `globals.css` — there is **no `tailwind.config.ts`**.
-- Primary accent color: `#FF8225` → `text-primary` / `bg-primary`.
+- `next-themes` with `attribute="class"` and `defaultTheme="system"`.
+- Monochrome semantic tokens (`paper`, `surface`, `surface-2`, `ink`, `ink-muted`,
+  `ink-faint`, `hairline`) defined as CSS vars in `globals.css`, flipped by `.dark`,
+  and exposed to Tailwind v4 via `@theme inline`. No accent color, no shadows.
+- Fonts: Source Serif 4 (headlines), Inter (body), JetBrains Mono (labels) via `next/font`.
 
 ### Framer Motion usage
 Components that animate on scroll use `motion.*` elements with `whileInView`. `HeroSection` uses named `Variants` objects (typed as `Variants` from framer-motion — required for v12 type compatibility). Other sections use inline `initial/whileInView/transition` props.
@@ -42,6 +47,3 @@ Components that animate on scroll use `motion.*` elements with `whileInView`. `H
 - Global setup in `setup.ts` mocks: `next-themes` (resolvedTheme always `"dark"`), `framer-motion` (Proxy-based mock so any `motion.TAG` renders as the plain HTML element), `next/navigation`.
 - React 19 note: wrap `fireEvent` calls in `act(async () => {...})` due to batched state updates. `fireEvent.change` on `<textarea>` can be unreliable — test the DOM property directly if needed.
 - `vitest.config.ts` is excluded from the Next.js build type-check; keep it that way.
-
-### Icons
-Material Symbols Outlined loaded via Google Fonts CSS import in `globals.css`. Used as `<span className="material-symbols-outlined">icon_name</span>`.

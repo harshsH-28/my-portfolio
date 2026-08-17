@@ -1,4 +1,6 @@
+import { Nav } from "@/components/Nav";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { MotionConfig } from "framer-motion";
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
@@ -58,7 +60,10 @@ export default function RootLayout({
         className={`${sourceSerif.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <MotionConfig reducedMotion="user">
+            <Nav />
+            {children}
+          </MotionConfig>
         </ThemeProvider>
       </body>
     </html>
