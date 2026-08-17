@@ -1,38 +1,43 @@
-import type { Metadata, Viewport } from "next";
-import { Space_Mono, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import type { Metadata, Viewport } from "next";
+import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { SITE_CONFIG } from "@/lib/portfolio-data";
 
 /* ─── Fonts ─────────────────────────────────────────────────────────── */
-const spaceMono = Space_Mono({
-  weight: ["400", "700"],
+const sourceSerif = Source_Serif_4({
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
-  variable: "--font-space-mono",
+  variable: "--font-source-serif",
   display: "swap",
 });
 
 const inter = Inter({
-  weight: ["300", "400", "500", "600"],
+  weight: ["400", "500"],
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
 /* ─── Metadata ───────────────────────────────────────────────────────── */
 export const metadata: Metadata = {
-  title: SITE_CONFIG.title,
+  title: {
+    default: SITE_CONFIG.title,
+    template: "%s — Harsh",
+  },
   description: SITE_CONFIG.description,
-  keywords: ["developer", "portfolio", "AI", "machine learning", "full stack"],
   openGraph: {
     title: SITE_CONFIG.title,
     description: SITE_CONFIG.description,
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SITE_CONFIG.title,
-    description: SITE_CONFIG.description,
   },
 };
 
@@ -49,8 +54,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${spaceMono.variable} ${inter.variable} font-mono antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <body
+        className={`${sourceSerif.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
+      >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
         </ThemeProvider>
       </body>
