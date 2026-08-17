@@ -105,7 +105,7 @@ export function AskDialog({
           {messages.map((msg) =>
             msg.role === "user" ? (
               <p key={msg.id} className="font-serif italic text-ink">
-                "{getMessageText(msg)}"
+                “{getMessageText(msg)}”
               </p>
             ) : (
               <p key={msg.id} className="text-sm leading-relaxed">
