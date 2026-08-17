@@ -1,19 +1,33 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
+// jsdom's <dialog> support is incomplete — stub the modal API if missing
+if (!window.HTMLDialogElement.prototype.showModal) {
+  window.HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
+    this.setAttribute("open", "");
+  };
+  window.HTMLDialogElement.prototype.close = function (this: HTMLDialogElement) {
+    this.removeAttribute("open");
+    this.dispatchEvent(new Event("close"));
+  };
+}
+
 // jsdom does not implement scrollIntoView — provide a stub
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
-// Mock next/navigation
+// Mock next/navigation — usePathname is a spy so tests can override the route
+const usePathnameMock = vi.fn(() => "/");
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
     prefetch: vi.fn(),
   }),
-  usePathname: () => "/",
+  usePathname: () => usePathnameMock(),
   useSearchParams: () => new URLSearchParams(),
 }));
+// biome-ignore lint/suspicious/noExplicitAny: test-global escape hatch
+(globalThis as any).__usePathnameMock = usePathnameMock;
 
 // Mock next-themes
 vi.mock("next-themes", () => ({
@@ -30,9 +44,10 @@ vi.mock("framer-motion", () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const React = require("react");
 
-  const makeMotionComponent = (tag: string) =>
+  const makeMotionComponent =
+    (tag: string) =>
     // eslint-disable-next-line react/display-name
-    function ({
+    ({
       children,
       // Strip framer-motion-specific props so they don't land on DOM nodes
       initial: _i,
@@ -47,19 +62,16 @@ vi.mock("framer-motion", () => {
       layout: _l,
       layoutId: _lid,
       ...rest
-    }: Record<string, unknown>) {
-      return React.createElement(tag, rest, children);
-    };
+    }: Record<string, unknown>) =>
+      React.createElement(tag, rest, children);
 
   // Proxy lets any motion.tagName work without explicit enumeration
-  const motionProxy = new Proxy(
-    {},
-    { get: (_target, key: string) => makeMotionComponent(key) }
-  );
+  const motionProxy = new Proxy({}, { get: (_target, key: string) => makeMotionComponent(key) });
 
   return {
     motion: motionProxy,
     AnimatePresence: ({ children }: { children: unknown }) => children,
+    MotionConfig: ({ children }: { children: unknown }) => children,
     useAnimation: () => ({
       start: vi.fn(),
       stop: vi.fn(),
@@ -68,33 +80,17 @@ vi.mock("framer-motion", () => {
   };
 });
 
-// Mock @ai-sdk/react — return pre-seeded messages so AskMeAnything renders correctly
-vi.mock("@ai-sdk/react", async () => {
-  const portfolioData = await import("@/lib/portfolio-data");
-  return {
-    useChat: vi.fn().mockReturnValue({
-      messages: [
-        {
-          id: "msg-1",
-          role: "assistant",
-          parts: [{ type: "text", text: portfolioData.AI_CHAT_INTRO.aiGreeting }],
-        },
-        {
-          id: "msg-2",
-          role: "assistant",
-          parts: [{ type: "text", text: portfolioData.AI_CHAT_INTRO.aiSpecialty }],
-        },
-        {
-          id: "msg-3",
-          role: "user",
-          parts: [{ type: "text", text: portfolioData.AI_CHAT_INTRO.guestQuestion }],
-        },
-      ],
-      sendMessage: vi.fn(),
-      status: "ready",
-    }),
-  };
-});
+// Mock @ai-sdk/react — stable return object so tests can assert on sendMessage
+const useChatReturn = {
+  messages: [] as unknown[],
+  sendMessage: vi.fn(),
+  status: "ready" as const,
+};
+vi.mock("@ai-sdk/react", () => ({
+  useChat: vi.fn(() => useChatReturn),
+}));
+// biome-ignore lint/suspicious/noExplicitAny: test-global escape hatch
+(globalThis as any).__useChatReturn = useChatReturn;
 
 // Mock ai — stub DefaultChatTransport so it doesn't attempt network calls
 vi.mock("ai", () => ({
